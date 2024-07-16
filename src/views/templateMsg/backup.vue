@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi } from "@/api/table"
-import { getTableDataApi } from "@/api/template"
-import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/template/types/table"
+import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getTableDataApi } from "@/api/table"
+import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/table/types/table"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-// import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
+import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import WangEditor from "@/components/WangEditor/index.vue"
@@ -54,7 +53,7 @@ const resetForm = () => {
 
 //#region 删
 const handleDelete = (row: GetTableData) => {
-  ElMessageBox.confirm(`正在删除用户：${row.template_name}，确认删除？`, "提示", {
+  ElMessageBox.confirm(`正在删除用户：${row.username}，确认删除？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
@@ -84,13 +83,14 @@ const searchData = reactive({
 const getTableData = () => {
   loading.value = true
   getTableDataApi({
-    page_no: paginationData.currentPage,
-    page_size: paginationData.pageSize,
-    template_name: searchData.username || undefined
+    currentPage: paginationData.currentPage,
+    size: paginationData.pageSize,
+    username: searchData.username || undefined,
+    phone: searchData.phone || undefined
   })
     .then(({ data }) => {
       paginationData.total = data.total
-      tableData.value = data.items
+      tableData.value = data.list
     })
     .catch(() => {
       tableData.value = []
@@ -146,15 +146,15 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="template_name" label="用户名" align="center" />
-          <!-- <el-table-column prop="roles" label="角色" align="center">
+          <el-table-column prop="username" label="用户名" align="center" />
+          <el-table-column prop="roles" label="角色" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.roles === 'admin'" type="primary" effect="plain">admin</el-tag>
               <el-tag v-else type="warning" effect="plain">{{ scope.row.roles }}</el-tag>
             </template>
-          </el-table-column> -->
-          <!-- <el-table-column prop="phone" label="手机号" align="center" />
-          <el-table-column prop="email" label="邮箱" align="center" /> -->
+          </el-table-column>
+          <el-table-column prop="phone" label="手机号" align="center" />
+          <el-table-column prop="email" label="邮箱" align="center" />
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.status" type="success" effect="plain">启用</el-tag>
@@ -188,7 +188,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       v-model="dialogVisible"
       :title="formData.id === undefined ? '新增用户' : '修改用户'"
       @closed="resetForm"
-      width="50%"
+      width="30%"
     >
       <WangEditor />
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">

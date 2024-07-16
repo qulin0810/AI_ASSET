@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi } from "@/api/table"
-import { getTableDataApi } from "@/api/template"
-import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/template/types/table"
+import { createTableDataApi, deleteTableDataApi, updateTableDataApi } from "@/api/contract"
+import { getTableDataApi } from "@/api/contract"
+import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/contract/types/table"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-// import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
+import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import WangEditor from "@/components/WangEditor/index.vue"
@@ -20,14 +20,15 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 //#region 增
 const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
   id: undefined,
-  username: "",
-  password: ""
+  // username: "",
+  password: "",
+  contract_name: ""
 }
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules: FormRules<CreateOrUpdateTableRequestData> = {
-  username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
+  // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
   password: [{ required: true, trigger: "blur", message: "请输入密码" }]
 }
 const handleCreateOrUpdate = () => {
@@ -50,11 +51,10 @@ const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
-//#endregion
 
 //#region 删
 const handleDelete = (row: GetTableData) => {
-  ElMessageBox.confirm(`正在删除用户：${row.template_name}，确认删除？`, "提示", {
+  ElMessageBox.confirm(`正在删除用户：${row.contract_name}，确认删除？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
@@ -72,7 +72,11 @@ const handleUpdate = (row: GetTableData) => {
   dialogVisible.value = true
   formData.value = cloneDeep(row)
 }
-//#endregion
+// 新增审核
+const handleContractCheck = (row: GetTableData) => {
+  dialogVisible.value = true
+  formData.value = cloneDeep(row)
+}
 
 //#region 查
 const tableData = ref<GetTableData[]>([])
@@ -86,7 +90,8 @@ const getTableData = () => {
   getTableDataApi({
     page_no: paginationData.currentPage,
     page_size: paginationData.pageSize,
-    template_name: searchData.username || undefined
+    contract_name: searchData.username || undefined,
+    type_filter: searchData.phone || undefined
   })
     .then(({ data }) => {
       paginationData.total = data.total
@@ -146,7 +151,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <el-table :data="tableData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="template_name" label="用户名" align="center" />
+          <el-table-column prop="contract_name" label="用户名" align="center" />
           <!-- <el-table-column prop="roles" label="角色" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.roles === 'admin'" type="primary" effect="plain">admin</el-tag>
@@ -161,11 +166,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
               <el-tag v-else type="danger" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column prop="edition_name" label="创建时间" align="center" />
+          <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button type="primary" text bg size="small" @click="handleContractCheck(scope.row)">审核</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -188,7 +194,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       v-model="dialogVisible"
       :title="formData.id === undefined ? '新增用户' : '修改用户'"
       @closed="resetForm"
-      width="50%"
+      width="30%"
     >
       <WangEditor />
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
