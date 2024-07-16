@@ -8,10 +8,11 @@ import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@el
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import WangEditor from "@/components/WangEditor/index.vue"
+import Check from "@/components/Check/index.vue"
 
 defineOptions({
   // 命名当前组件
-  name: "templateMsg"
+  name: "contractMsg"
 })
 
 const loading = ref<boolean>(false)
@@ -25,6 +26,7 @@ const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
   contract_name: ""
 }
 const dialogVisible = ref<boolean>(false)
+const dialogCheckVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules: FormRules<CreateOrUpdateTableRequestData> = {
@@ -74,7 +76,7 @@ const handleUpdate = (row: GetTableData) => {
 }
 // 新增审核
 const handleContractCheck = (row: GetTableData) => {
-  dialogVisible.value = true
+  dialogCheckVisible.value = true
   formData.value = cloneDeep(row)
 }
 
@@ -169,7 +171,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="edition_name" label="创建时间" align="center" />
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">预览</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
               <el-button type="primary" text bg size="small" @click="handleContractCheck(scope.row)">审核</el-button>
             </template>
@@ -189,12 +191,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         />
       </div>
     </el-card>
-    <!-- 新增/修改 -->
+    <!-- 浏览 -->
     <el-dialog
       v-model="dialogVisible"
       :title="formData.id === undefined ? '新增用户' : '修改用户'"
       @closed="resetForm"
-      width="30%"
+      width="80%"
     >
       <WangEditor />
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
@@ -209,6 +211,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
       </template>
+    </el-dialog>
+    <!-- 审核 -->
+    <el-dialog :close-on-click-modal="false" v-model="dialogCheckVisible" title="审核" @closed="resetForm" width="80%">
+      <Check />
     </el-dialog>
   </div>
 </template>
