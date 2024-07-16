@@ -2,5 +2,6 @@
 interface ApiResponseData<T> {
   code: number
   data: T
-  message: string
+  error_msg: string
+  success: boolean
 }

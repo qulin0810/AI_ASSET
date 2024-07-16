@@ -4,11 +4,11 @@ export interface LoginRequestData {
   /** 密码 */
   password: string
   /** 验证码 */
-  code: string
+  // code: string
 }
 
 export type LoginCodeResponseData = ApiResponseData<string>
 
 export type LoginResponseData = ApiResponseData<{ token: string }>
 
-export type UserInfoResponseData = ApiResponseData<{ username: string; roles: string[] }>
+export type UserInfoResponseData = ApiResponseData<{ username: string; id: number }>
