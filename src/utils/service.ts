@@ -32,8 +32,8 @@ function createService() {
       const code = apiData.code
       // 如果没有 code, 代表这不是项目后端开发的 api
       if (code === undefined) {
-        ElMessage.error("非本系统的接口")
-        return Promise.reject(new Error("非本系统的接口"))
+        ElMessage.error("api error")
+        return Promise.reject(new Error("api error"))
       }
       switch (code) {
         case 0:
