@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi } from "@/api/contract"
+import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getContractContent } from "@/api/contract"
 import { getTableDataApi } from "@/api/contract"
 import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/contract/types/table"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
@@ -8,6 +8,7 @@ import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@el
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import WangEditor from "@/components/WangEditor/index.vue"
+import mammoth from "mammoth"
 import Check from "@/components/Check/index.vue"
 
 defineOptions({
@@ -31,8 +32,9 @@ const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules: FormRules<CreateOrUpdateTableRequestData> = {
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+  contract_name: [{ required: true, trigger: "blur", message: "请输入密码" }]
 }
+const contractContent = ref(null)
 const handleCreateOrUpdate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
@@ -69,11 +71,48 @@ const handleDelete = (row: GetTableData) => {
 }
 //#endregion
 
-//#region 改
-const handleUpdate = (row: GetTableData) => {
-  dialogVisible.value = true
-  formData.value = cloneDeep(row)
+//浏览
+const handleUpdate = async (row: GetTableData) => {
+  debugger
+  getContractContent(row.id)
+  try {
+    const res = await getContractContent(row.id)
+    const value = (await analysisWord(res)) as any
+    console.log(value)
+    contractContent.value = value
+    dialogVisible.value = true
+    formData.value = cloneDeep(row)
+  } catch (error) {
+    contractContent.value = null
+  } finally {
+    loading.value = false
+  }
+  // .then((res) => {
+  //   const value = await analysisWord(res);
+  //   console.log(value)
+  //   dialogVisible.value = true
+  //   formData.value = cloneDeep(row)
+  // })
+  // .catch(() => {
+  //   contractContent.value = null
+  // })
+  // .finally(() => {
+  //   loading.value = false
+  // })
 }
+// 解析 Word 文件
+const analysisWord = async (file: Blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      mammoth.convertToHtml({ arrayBuffer: evt.target.result }).then((resultObject) => {
+        resolve(resultObject.value)
+      })
+    }
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 // 新增审核
 const handleContractCheck = (row: GetTableData) => {
   dialogCheckVisible.value = true
@@ -196,17 +235,17 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       v-model="dialogVisible"
       :title="formData.id === undefined ? '新增用户' : '修改用户'"
       @closed="resetForm"
-      width="80%"
+      width="60%"
     >
-      <WangEditor />
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
+      <WangEditor :data="contractContent" />
+      <!-- <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="用户名">
           <el-input v-model="formData.username" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="password" label="密码" v-if="formData.id === undefined">
           <el-input v-model="formData.password" placeholder="请输入" />
         </el-form-item>
-      </el-form>
+      </el-form> -->
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>

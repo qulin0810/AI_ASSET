@@ -27,11 +27,20 @@ export function updateTableDataApi(data: Table.CreateOrUpdateTableRequestData) {
   })
 }
 
-/** 查 */
+/** 合同列表*/
 export function getTableDataApi(params: Table.GetTableRequestData) {
   return request<Table.GetTableResponseData>({
     url: "/contract/list",
     method: "post",
     params
+  })
+}
+
+/**模板浏览*/
+export function getContractContent(id: string) {
+  return request({
+    url: `/file/download/stream/${id}`,
+    method: "get",
+    responseType: "blob"
   })
 }
