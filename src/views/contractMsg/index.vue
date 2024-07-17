@@ -76,7 +76,7 @@ const handleUpdate = async (row: GetTableData) => {
   debugger
   getContractContent(row.id)
   try {
-    const res = await getContractContent(row.id)
+    const res = await getContractContent("13")
     const value = (await analysisWord(res)) as any
     console.log(value)
     contractContent.value = value
@@ -151,6 +151,10 @@ const handleSearch = () => {
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
   handleSearch()
+}
+const contentChange = (e: any) => {
+  debugger
+  console.log()
 }
 //#endregion
 
@@ -237,7 +241,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       @closed="resetForm"
       width="60%"
     >
-      <WangEditor :data="contractContent" />
+      <WangEditor :data="contractContent" @change="contentChange" />
       <!-- <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="用户名">
           <el-input v-model="formData.username" placeholder="请输入" />
