@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import {
-  onMounted,
+  //   onMounted,
   //   reactive,
-  ref,
+  ref
   //   watch
-  defineProps
 } from "vue"
 import WangEditor from "@/components/WangEditor/index.vue"
 import { cloneDeep } from "lodash-es"
@@ -21,10 +20,6 @@ const DEFAULT_FORM_DATA = {
   password: "",
   contract_name: ""
 }
-const contractContent = ref("")
-const props = defineProps({
-  dataInfo: String
-})
 // const prop = defineProps < Props > ()
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const options = [
@@ -49,14 +44,6 @@ const options = [
     label: "Option5"
   }
 ]
-onMounted(() => {
-  contractContent.value = props.dataInfo || ""
-  // setTimeout(() => {
-  //   valueHtml.value = props.dataInfo || ""; //回显数据
-  // }, 50);
-})
-
-function handleCreateOrUpdate() {}
 </script>
 
 <template>
@@ -64,29 +51,38 @@ function handleCreateOrUpdate() {}
   <el-row>
     <el-col :span="11">
       <div class="grid-content ep-bg-purple" />
-      <WangEditor :dataInfo="contractContent" />
-      <div style="margin-top: 2rem">
-        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">新建版本</el-button>
-        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">保存</el-button>
-      </div>
-    </el-col>
-    <el-col :span="1"> </el-col>
-    <el-col :span="11">
       <div class="grid-content ep-bg-purple-light" />
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item label="Activity count" prop="count">
+        <el-form-item label="选择模板" prop="count">
           <el-select v-model="value" clearable placeholder="Select" style="width: 30rem">
             <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
+          <el-button style="margin-left: 2rem" type="primary">浏览</el-button>
         </el-form-item>
-        <el-form-item prop="username" label="用户名">
-          <el-input v-model="formData.username" placeholder="请输入" type="textarea" style="width: 30rem" :rows="11" />
+        <el-form-item prop="username" label="合同名称">
+          <el-input v-model="formData.username" placeholder="请输入" style="width: 30rem" />
         </el-form-item>
-        <el-form-item prop="password" label="密码">
-          <el-input v-model="formData.password" placeholder="请输入" type="textarea" style="width: 30rem" :rows="11" />
+      </el-form>
+      <el-form ref="formRef1" :model="formData" :rules="formRules" label-width="100px" label-position="top">
+        <el-form-item label="选择模板" prop="count">
+          <el-select v-model="value" clearable placeholder="Select" style="width: 20rem">
+            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="username" label="合同名称">
+          <el-input v-model="formData.username" placeholder="请输入" style="width: 20rem" />
         </el-form-item>
       </el-form>
       <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
+    </el-col>
+    <el-col :span="1"> </el-col>
+    <el-col :span="11">
+      <div class="grid-content ep-bg-purple" />
+      <WangEditor />
+      <!-- <div style="margin-top: 2rem">
+        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">新建版本</el-button>
+        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">保存</el-button>
+      </div> -->
     </el-col>
   </el-row>
 </template>

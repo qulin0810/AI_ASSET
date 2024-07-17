@@ -10,6 +10,7 @@ import { cloneDeep } from "lodash-es"
 import WangEditor from "@/components/WangEditor/index.vue"
 import mammoth from "mammoth"
 import Check from "@/components/Check/index.vue"
+import Create from "@/components/Create/index.vue"
 
 defineOptions({
   // 命名当前组件
@@ -28,13 +29,16 @@ const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
 }
 const dialogVisible = ref<boolean>(false)
 const dialogCheckVisible = ref<boolean>(false)
+const dialogCreateVisible = ref<boolean>(false)
+
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const contractConent = ref<string | null>(null)
 const formRules: FormRules<CreateOrUpdateTableRequestData> = {
   // username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
   contract_name: [{ required: true, trigger: "blur", message: "请输入密码" }]
 }
-const contractContent = ref(null)
+const contractContent = ref<string | null>(null)
 const handleCreateOrUpdate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
@@ -73,39 +77,35 @@ const handleDelete = (row: GetTableData) => {
 
 //浏览
 const handleUpdate = async (row: GetTableData) => {
-  debugger
   getContractContent(row.id)
   try {
     const res = await getContractContent("13")
-    const value = (await analysisWord(res)) as any
-    console.log(value)
-    contractContent.value = value
-    dialogVisible.value = true
-    formData.value = cloneDeep(row)
+    if (res?.type == "application/json") {
+      const reader = new FileReader() as any //创建一个FileReader实例
+      reader.readAsText(res, "utf-8") //读取文件,结果用字符串形式表示
+      reader.onload = function () {
+        const { error_msg } = JSON.parse(reader?.result)
+        debugger
+        ElMessage.error(error_msg)
+      }
+    } else {
+      const value: any = await analysisWord(res as Blob)
+      contractContent.value = value
+      dialogVisible.value = true
+      formData.value = cloneDeep(row)
+    }
   } catch (error) {
     contractContent.value = null
   } finally {
     loading.value = false
   }
-  // .then((res) => {
-  //   const value = await analysisWord(res);
-  //   console.log(value)
-  //   dialogVisible.value = true
-  //   formData.value = cloneDeep(row)
-  // })
-  // .catch(() => {
-  //   contractContent.value = null
-  // })
-  // .finally(() => {
-  //   loading.value = false
-  // })
 }
 // 解析 Word 文件
 const analysisWord = async (file: Blob) => {
   return new Promise((resolve) => {
     const reader = new FileReader()
     reader.onload = (evt) => {
-      mammoth.convertToHtml({ arrayBuffer: evt.target.result }).then((resultObject) => {
+      mammoth.convertToHtml({ arrayBuffer: evt?.target?.result }).then((resultObject) => {
         resolve(resultObject.value)
       })
     }
@@ -153,8 +153,7 @@ const resetSearch = () => {
   handleSearch()
 }
 const contentChange = (e: any) => {
-  debugger
-  console.log()
+  contractConent.value = e
 }
 //#endregion
 
@@ -181,7 +180,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增用户</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="dialogCreateVisible = true">新增用户</el-button>
           <el-button type="danger" :icon="Delete">批量删除</el-button>
         </div>
         <div>
@@ -241,7 +240,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       @closed="resetForm"
       width="60%"
     >
-      <WangEditor :data="contractContent" @change="contentChange" />
+      <WangEditor :dataInfo="contractContent" @change="contentChange" />
       <!-- <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="用户名">
           <el-input v-model="formData.username" placeholder="请输入" />
@@ -250,14 +249,18 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-input v-model="formData.password" placeholder="请输入" />
         </el-form-item>
       </el-form> -->
-      <template #footer>
+      <!-- <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
-      </template>
+      </template> -->
     </el-dialog>
     <!-- 审核 -->
     <el-dialog :close-on-click-modal="false" v-model="dialogCheckVisible" title="审核" @closed="resetForm" width="80%">
-      <Check />
+      <Check :data="contractContent" />
+    </el-dialog>
+    <!-- 生成 -->
+    <el-dialog :close-on-click-modal="false" v-model="dialogCreateVisible" title="生成" @closed="resetForm" width="80%">
+      <Create :data="contractContent" />
     </el-dialog>
   </div>
 </template>
