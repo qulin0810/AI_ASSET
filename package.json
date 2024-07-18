@@ -29,6 +29,8 @@
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "1.7.2",
+    "codemirror": "^5.65.5",
+    "diff-match-patch": "^1.0.5",
     "dayjs": "1.11.11",
     "element-plus": "2.7.3",
     "js-cookie": "3.0.5",

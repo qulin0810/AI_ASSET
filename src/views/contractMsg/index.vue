@@ -11,7 +11,8 @@ import WangEditor from "@/components/WangEditor/index.vue"
 import mammoth from "mammoth"
 import Check from "@/components/Check/index.vue"
 import Create from "@/components/Create/index.vue"
-
+import Codemirror from "@/components/Codemirror/index.vue"
+// import {analysisWord} from "@/utils/analysis"
 defineOptions({
   // 命名当前组件
   name: "contractMsg"
@@ -30,7 +31,7 @@ const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
 const dialogVisible = ref<boolean>(false)
 const dialogCheckVisible = ref<boolean>(false)
 const dialogCreateVisible = ref<boolean>(false)
-
+const dialogCompareVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const contractConent = ref<string | null>(null)
@@ -76,7 +77,7 @@ const handleDelete = (row: GetTableData) => {
 //#endregion
 
 //浏览
-const handleUpdate = async (row: GetTableData) => {
+const handleView = async (row: GetTableData) => {
   // getContractContent(row.id)
   try {
     const res = await getContractContent("13")
@@ -85,14 +86,14 @@ const handleUpdate = async (row: GetTableData) => {
       reader.readAsText(res, "utf-8") //读取文件,结果用字符串形式表示
       reader.onload = function () {
         const { error_msg } = JSON.parse(reader?.result)
-        debugger
         ElMessage.error(error_msg)
       }
     } else {
-      const value: any = await analysisWord(res as Blob)
+      debugger
+      const value: any = analysisWord(res as Blob)
+      //const value: any = await analysisWord(res as Blob)
       contractContent.value = value
       dialogVisible.value = true
-      // formData.value = cloneDeep(row)
     }
   } catch (error) {
     contractContent.value = null
@@ -100,7 +101,7 @@ const handleUpdate = async (row: GetTableData) => {
     loading.value = false
   }
 }
-// 解析 Word 文件
+//解析 Word 文件
 const analysisWord = async (file: Blob) => {
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -125,7 +126,7 @@ const handleContractCheck = async (row: GetTableData) => {
         ElMessage.error(error_msg)
       }
     } else {
-      const value: any = await analysisWord(res as Blob)
+      const value: any = analysisWord(res as Blob)
       contractContent.value = value
       dialogCheckVisible.value = true
       // formData.value = cloneDeep(row)
@@ -144,6 +145,7 @@ const searchData = reactive({
   username: "",
   phone: ""
 })
+// 获取初始化列表
 const getTableData = () => {
   loading.value = true
   getTableDataApi({
@@ -162,6 +164,10 @@ const getTableData = () => {
     .finally(() => {
       loading.value = false
     })
+}
+//对比
+const handleCompare = () => {
+  dialogCompareVisible.value = true
 }
 const handleSearch = () => {
   paginationData.currentPage === 1 ? getTableData() : (paginationData.currentPage = 1)
@@ -231,8 +237,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-table-column prop="edition_name" label="创建时间" align="center" />
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">预览</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button type="primary" text bg size="small" @click="handleView(scope.row)">预览</el-button>
+              <el-button type="primary" text bg size="small" @click="handleCompare(scope.row)">对比</el-button>
+              <!-- <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button> -->
               <el-button type="primary" text bg size="small" @click="handleContractCheck(scope.row)">审核</el-button>
             </template>
           </el-table-column>
@@ -274,6 +281,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     <!-- 生成 -->
     <el-dialog :close-on-click-modal="false" v-model="dialogCreateVisible" title="生成" @closed="resetForm" width="80%">
       <Create :data="contractContent" />
+    </el-dialog>
+    <!-- 對比 -->
+    <el-dialog
+      :close-on-click-modal="false"
+      v-model="dialogCompareVisible"
+      title="对比"
+      @closed="resetForm"
+      width="80%"
+    >
+      <Codemirror :data="contractContent" />
     </el-dialog>
   </div>
 </template>

@@ -12,8 +12,12 @@ import {
   type ContractOption
   // type GetTableData
 } from "@/api/contract/types/table"
+import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getContractContent } from "@/api/contract"
 import { getContractDetail, getSceneList } from "@/api/contract"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { getTableDataApi } from "@/api/template"
+import mammoth from "mammoth"
+// import analysisWord from "@/utils/analysis"
 interface RuleForm {
   template_id: string
   contract_name: string
@@ -33,9 +37,10 @@ const DEFAULT_OPTION = [
     label: ""
   }
 ]
-const ruleFormRef = ref<FormInstance>()
+// const ruleFormRef = ref<FormInstance>()
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const selectOption = ref(DEFAULT_OPTION)
+const contractContent = ref<string | null>(null)
 const options = [
   {
     value: "Option1",
@@ -61,14 +66,19 @@ const options = [
 onMounted(() => {
   querySelect()
 })
+// 初始化模板下拉选
 async function querySelect() {
   try {
-    const res = await getSceneList()
+    const res = await getTableDataApi({
+      page_no: 1,
+      page_size: 1000,
+      template_name: undefined
+    })
     if (res.code === 0) {
       let result = res.data
-      selectOption.value = result?.map((item: any) => ({
+      selectOption.value = result?.items.map((item: any) => ({
         value: item.id,
-        label: item.id
+        label: item.template_name
       }))
     } else {
       ElMessage.error(res.error_msg)
@@ -77,13 +87,46 @@ async function querySelect() {
     ElMessage.error(error)
   }
 }
+// 浏览模板
+const handleView = async (row: GetTableData) => {
+  // getContractContent(row.id)
+  try {
+    const res = await getContractContent("13")
+    debugger
+    if (res?.type == "application/json") {
+      const reader = new FileReader() as any //创建一个FileReader实例
+      reader.readAsText(res, "utf-8") //读取文件,结果用字符串形式表示
+      reader.onload = function () {
+        const { error_msg } = JSON.parse(reader?.result)
+        ElMessage.error(error_msg)
+      }
+    } else {
+      const value: any = await analysisWord(res as Blob)
+      contractContent.value = value
+    }
+  } catch (error) {
+    contractContent.value = null
+  } finally {
+    loading.value = false
+  }
+}
+const analysisWord = async (file: Blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      mammoth.convertToHtml({ arrayBuffer: evt?.target?.result }).then((resultObject) => {
+        resolve(resultObject.value)
+      })
+    }
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 async function handlDetail(e: any) {
-  debugger
   loading.value = true
   try {
-    let id: string = e.target.value
-    debugger
-    const res = await getContractDetail("5")
+    // let id: string = e.target.value
+    const res = await getContractDetail(e)
     if (res) {
     }
     ElMessage.error(res.error_msg)
@@ -155,7 +198,7 @@ async function handlDetail(e: any) {
     <el-col :span="1"> </el-col>
     <el-col :span="11">
       <div class="grid-content ep-bg-purple" />
-      <WangEditor />
+      <WangEditor :dataInfo="contractContent" />
       <!-- <div style="margin-top: 2rem">
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">新建版本</el-button>
         <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">保存</el-button>
