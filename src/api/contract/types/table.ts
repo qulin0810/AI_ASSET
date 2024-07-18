@@ -1,10 +1,11 @@
 export interface CreateOrUpdateTableRequestData {
-  id?: string
-  // username: string
-  password?: string
-  contract_name: string
+  template_id: undefined
+  contract_name?: ""
 }
-
+export interface ContractOption {
+  key?: string
+  value?: string
+}
 export interface GetTableRequestData {
   /** 当前页码 */
   page_no: number
@@ -32,3 +33,9 @@ export type GetTableResponseData = ApiResponseData<{
   items: GetTableData[]
   total: number
 }>
+
+export interface SceneData {
+  id: string
+}
+
+export type SceneResponseData = ApiResponseData<[]>

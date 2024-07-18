@@ -44,3 +44,17 @@ export function getContractContent(id: string) {
     responseType: "blob"
   })
 }
+/**获取合同信息*/
+export function getContractDetail(template_id: string) {
+  return request({
+    url: `/template/view/${template_id}`,
+    method: "get"
+  })
+}
+/** 获取场景*/
+export function getSceneList() {
+  return request<Table.SceneResponseData>({
+    url: "/ai/scene/list",
+    method: "post"
+  })
+}

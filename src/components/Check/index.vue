@@ -1,29 +1,21 @@
 <script lang="ts" setup>
-import {
-  onMounted,
-  //   reactive,
-  ref,
-  //   watch
-  defineProps
-} from "vue"
+import { onMounted, ref, defineProps } from "vue"
 import WangEditor from "@/components/WangEditor/index.vue"
 import { cloneDeep } from "lodash-es"
-import {
-  type CreateOrUpdateTableRequestData
-  // type GetTableData
-} from "@/api/contract/types/table"
-// interface Props {
-//   // obj: Object
-// }
+import { type CreateOrUpdateTableRequestData } from "@/api/contract/types/table"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { getContractDetail, getSceneList } from "@/api/contract"
 const DEFAULT_FORM_DATA = {
   id: undefined,
   // username: "",
   password: "",
   contract_name: ""
 }
+const selectOption = ref({})
 const contractContent = ref("")
+const loading = ref<boolean>(false)
 const props = defineProps({
-  dataInfo: String
+  data: String
 })
 // const prop = defineProps < Props > ()
 const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
@@ -50,13 +42,29 @@ const options = [
   }
 ]
 onMounted(() => {
-  contractContent.value = props.dataInfo || ""
-  // setTimeout(() => {
-  //   valueHtml.value = props.dataInfo || ""; //回显数据
-  // }, 50);
+  contractContent.value = props.data || ""
+  querySelect()
 })
+// onMounted(() => {
 
-function handleCreateOrUpdate() {}
+//   })
+async function querySelect() {
+  try {
+    const res = await getSceneList()
+    if (res.code === 0) {
+      let result = res.data
+      selectOption.value = result?.map((item: any) => ({
+        value: item.id,
+        label: item.id
+      }))
+    } else {
+      ElMessage.error(res.error_msg)
+    }
+  } catch (error: any) {
+    ElMessage.error(error)
+  }
+}
+async function handleCreateOrUpdate() {}
 </script>
 
 <template>
@@ -74,15 +82,15 @@ function handleCreateOrUpdate() {}
     <el-col :span="11">
       <div class="grid-content ep-bg-purple-light" />
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item label="Activity count" prop="count">
+        <el-form-item label="选择场景" prop="count">
           <el-select v-model="value" clearable placeholder="Select" style="width: 30rem">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in selectOption" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="username" label="用户名">
+        <el-form-item prop="username" label="提交区">
           <el-input v-model="formData.username" placeholder="请输入" type="textarea" style="width: 30rem" :rows="11" />
         </el-form-item>
-        <el-form-item prop="password" label="密码">
+        <el-form-item prop="password" label="回显区">
           <el-input v-model="formData.password" placeholder="请输入" type="textarea" style="width: 30rem" :rows="11" />
         </el-form-item>
       </el-form>

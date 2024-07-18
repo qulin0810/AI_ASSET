@@ -77,7 +77,7 @@ const handleDelete = (row: GetTableData) => {
 
 //浏览
 const handleUpdate = async (row: GetTableData) => {
-  getContractContent(row.id)
+  // getContractContent(row.id)
   try {
     const res = await getContractContent("13")
     if (res?.type == "application/json") {
@@ -92,7 +92,7 @@ const handleUpdate = async (row: GetTableData) => {
       const value: any = await analysisWord(res as Blob)
       contractContent.value = value
       dialogVisible.value = true
-      formData.value = cloneDeep(row)
+      // formData.value = cloneDeep(row)
     }
   } catch (error) {
     contractContent.value = null
@@ -114,9 +114,27 @@ const analysisWord = async (file: Blob) => {
 }
 
 // 新增审核
-const handleContractCheck = (row: GetTableData) => {
-  dialogCheckVisible.value = true
-  formData.value = cloneDeep(row)
+const handleContractCheck = async (row: GetTableData) => {
+  try {
+    const res = await getContractContent("13")
+    if (res?.type == "application/json") {
+      const reader = new FileReader() as any //创建一个FileReader实例
+      reader.readAsText(res, "utf-8") //读取文件,结果用字符串形式表示
+      reader.onload = function () {
+        const { error_msg } = JSON.parse(reader?.result)
+        ElMessage.error(error_msg)
+      }
+    } else {
+      const value: any = await analysisWord(res as Blob)
+      contractContent.value = value
+      dialogCheckVisible.value = true
+      // formData.value = cloneDeep(row)
+    }
+  } catch (error) {
+    contractContent.value = null
+  } finally {
+    loading.value = false
+  }
 }
 
 //#region 查
@@ -234,12 +252,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       </div>
     </el-card>
     <!-- 浏览 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="formData.id === undefined ? '新增用户' : '修改用户'"
-      @closed="resetForm"
-      width="60%"
-    >
+    <el-dialog v-model="dialogVisible" title="浏览" @closed="resetForm" width="60%">
       <WangEditor :dataInfo="contractContent" @change="contentChange" />
       <!-- <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
         <el-form-item prop="username" label="用户名">
